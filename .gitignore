@@ -3,6 +3,9 @@ shared_drive/*
 training/*
 .setttings/*
 
+#Visual Studio
+build/*
+
 #CMake
 CMakeLists.txt.user
 CMakeCache.txt
