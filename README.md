@@ -81,4 +81,4 @@ The necessary Python packages are the following:
 * plotly
 * jupyter (obviously)
 
-The C++ codes are trickier, you need *CMake* and the Pytorch C++ distribution aka *Libtorch*. *Libtorch* has a *debug* and a *release* distribution, both are supposed to work. On Windows you also need to install *Microsoft Visual Studio C++*. Read more in [this section](running-the-c-codes).
+The C++ codes are trickier, you need *CMake* and the Pytorch C++ distribution aka *Libtorch*. *Libtorch* has a *debug* and a *release* distribution, both are supposed to work. On Windows you also need to install *Microsoft Visual Studio C++*. Read more in [this section](#running-the-c-codes).
