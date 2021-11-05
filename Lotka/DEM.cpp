@@ -220,6 +220,8 @@ public:
 			lot(t, k);
 			for (int j = 0; j < order; j++) {
 				vector[j] = vector[j] + delta_t * k[j] + delta_t * delta_t * local_error[j];
+				//To change to Euler Method uncomment the following, comment out the previous
+				//vector[j] = vector[j] + delta_t * k[j];
 			}
 			l++;
 			t += delta_t;
