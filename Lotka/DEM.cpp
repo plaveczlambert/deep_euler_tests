@@ -18,9 +18,9 @@ const int nn_inputs = 4;
 const int nn_outputs = 2;
 c10::TensorOptions global_tensor_op;
 
-string file_name = "../lotka_dem.txt";
-string model_file = "../traced_model_e2500_2107071955.pt";
-string output_log = "../output_compare.txt";
+string file_name = "../simulations/lotka_dem.txt";
+string model_file = "../training/traced_model_e2500_2107071955.pt";
+string output_log = "../simulations/output_compare.txt";
 
 typedef double value_type;
 typedef vector<value_type> state_type;
@@ -267,7 +267,7 @@ int main() {
 	cout << "Writing file: " << file_name << endl;
 
 	//initial conditions
-	std::array<value_type, nn_inputs> initial_inputs = { 1e-5, 0.0, 2.0, 1.0};
+	std::array<value_type, nn_inputs> initial_inputs = { 1e-5, 0.0, x[0], x[1]};
 	
 	double t_start = 0.0;
 	lotka bubi(initial_inputs);

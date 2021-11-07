@@ -231,6 +231,8 @@ public:
 			vdp(t, k);
 			for (int j = 0; j < order; j++) {
 				vector[j] = vector[j] + delta_t * k[j] +delta_t * delta_t * local_error[j];
+				//To change to Euler Method uncomment the following, comment out the previous
+				//vector[j] = vector[j] + delta_t * k[j];																 
 			}
 			l++;
 			t += delta_t;
@@ -276,7 +278,7 @@ int main() {
 	cout << "Writing file: " << file_name << endl;
 
 	//initial conditions
-	std::array<value_type, nn_inputs> initial_inputs = { 1e-5, 4.0, 3.0};
+	std::array<value_type, nn_inputs> initial_inputs = { 1e-5, x[0], x[1]};
 	
 	double t_start = 0.0;
 	VdP bubi(initial_inputs);
