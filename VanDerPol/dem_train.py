@@ -29,13 +29,13 @@ parser.add_argument(
     '--batch',
     default = '100',
     type    = int,
-    help    = "Batch size. 0 means training set length."
+    help    = "Batch size. 0 means training set length. Default is 100."
     )
 parser.add_argument(
     '--epoch',
     default = '1',
     type    = int,
-    help    = "Number of epochs to train."
+    help    = "Number of epochs to train. Default is 1."
     )
 parser.add_argument(
     '--load_model',
@@ -59,7 +59,7 @@ parser.add_argument(
     '--save_path',
     default = 'training/',
     type    = str,
-    help    = "Path to save model."
+    help    = "Path to save model. Default is 'training'."
     )
 parser.add_argument(
     '--monitor',
@@ -113,7 +113,7 @@ parser.add_argument(
     '--data',
     default = os.path.join('data', 'vdp_data_dt.hdf5'),
     type    = str,
-    help    = "Number of cpu threads to be used by pytorch. Default is 0 meaning same as number of cores."
+    help    = "Data to be loaded for training. Default is 'data/vdp_data_dt.hdf5'."
     )
 
 parser.set_defaults(
@@ -128,6 +128,9 @@ args    = parser.parse_args()
 
 if args.num_threads:
     torch.set_num_threads(args.num_threads)
+    
+if not os.path.isdir(args.save_path):
+    os.mkdir(args.save_path)
 
 #device selection logic
 device=0
@@ -451,7 +454,7 @@ if not args.test and args.save_plots:
 plt.figure(num="Losses (Full)")
 plt.title("Loss Distribution of Truncation Error(Full)")
 plot_loghist(test_losses.flat, 500)
-#plt.hist(np.hstack((test_losses[:3,:].flat, test_losses[4:,:].flat)), bins=50)
+#plt.hist(test_losses.flat, bins=50)
 #plt.ylim([0,500])
 plt.xscale('log')
 if args.monitor>0:
@@ -460,7 +463,6 @@ if args.monitor>0:
     
 if not args.test and args.save_plots:
     plt.savefig(args.save_path+"Loss_distr_full_"+time_str+".png", transparent=True)
-
 
 if not args.test:
     logfile.close()

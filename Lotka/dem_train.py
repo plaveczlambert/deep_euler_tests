@@ -3,7 +3,7 @@ import argparse
 import os
 import h5py
 from datetime import datetime
-from copy import deepcopy                       
+from copy import deepcopy
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -27,15 +27,15 @@ torch.set_default_dtype(torch.float64)
 parser  = argparse.ArgumentParser()
 parser.add_argument(
     '--batch',
-    default = '1000',
+    default = '100',
     type    = int,
-    help    = "Batch size. 0 means training set length."
+    help    = "Batch size. 0 means training set length. Default is 100."
     )
 parser.add_argument(
     '--epoch',
     default = '1',
     type    = int,
-    help    = "Number of epochs to train."
+    help    = "Number of epochs to train. Default is 1."
     )
 parser.add_argument(
     '--load_model',
@@ -59,7 +59,7 @@ parser.add_argument(
     '--save_path',
     default = 'training/',
     type    = str,
-    help    = "Path to save model."
+    help    = "Path to save model. Default is 'training'."
     )
 parser.add_argument(
     '--monitor',
@@ -109,6 +109,12 @@ parser.add_argument(
     type    = int,
     help    = "Number of cpu threads to be used by pytorch. Default is 0 meaning same as number of cores."
     )
+parser.add_argument(
+    '--data',
+    default = os.path.join('data', 'lotka_data.hdf5'),
+    type    = str,
+    help    = "Data to be loaded for training. Default is 'data/lotka_data.hdf5'."
+    )
 
 parser.set_defaults(
     feature=False, 
@@ -116,13 +122,15 @@ parser.set_defaults(
     load_model=False, 
     test=False, 
     cpu=False,
-    print_epoch=False,
     early_stop=False
     )
 args    = parser.parse_args()
 
 if args.num_threads:
     torch.set_num_threads(args.num_threads)
+    
+if not os.path.isdir(args.save_path):
+    os.mkdir(args.save_path)
 
 #device selection logic
 device=0
@@ -148,7 +156,7 @@ if args.load_model:
 # ----- ----- ----- ----- ----- -----
 # Data loading
 # ----- ----- ----- ----- ----- -----
-data_path = os.path.join('lotka_data.hdf5')
+data_path = args.data
 f = h5py.File(data_path, 'r')
 keys = list(f.keys())
 print(keys)
@@ -163,7 +171,7 @@ print(X[1,:])
 input_names = ["x1", "x2"]
 
 print("Train data from: '"+ data_path +"'")
-if not args.test:                                                                                                                                                                                                             
+if not args.test:
     print("Train data from: " + data_path, file=logfile)
 
 input_length = X.shape[1]
