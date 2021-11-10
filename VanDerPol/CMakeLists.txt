@@ -5,7 +5,7 @@ project(VdP)
 #then follow (from this directory in cmd):
 #md build
 #cd build
-#cmake -DCMAKE_PREFIX_PATH=C:\Users\plamb\Dev\DeepLearningBubble\libtorch ..
+#cmake -DCMAKE_PREFIX_PATH=path\to\libtorch ..
 
 #build from cmd: cmake --build . --config Release
 #BUT recommended to use Visual Studio for building
