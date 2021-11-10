@@ -28,11 +28,9 @@ python dem_train.py --help
 ```
 The most important options are `epoch` and `batch`. It is advised to always explicitly provide them. A useful combination of arguments is the following.
 ```
-python dem_train.py --name MyModel --epoch 5000 --early_stop --batch 100 --save_plots --print_epoch 50 --print_losses 50
+python dem_train.py --name MyModel --epoch 5000 --early_stop --batch 100 --save_plots --print_epoch 50 --print_losses 50 --data data/vdp_data.hdf5
 ```
-This tells the script to name the model MyModel, run for 5000 epochs at most, but use early stop. The batch size should be 100, and the plots of the learning and validation losses should be saved. Moreover after every 50 epochs the number of the current epoch and the current training and validation losses are printed to the console. If you do not want the script to use all available CPU cores set the number of cores with `--num_threads`.
-
-The file with the learning data is hard-coded into the script. Make sure the variable `data_path` points to the right file before training.
+This tells the script to name the model *MyModel*, run for 5000 epochs at most, but use early stop. The batch size should be 100, and the plots of the learning and validation losses should be saved. Moreover after every 50 epochs the number of the current epoch and the current training and validation losses are printed to the console. The training data is loaded from the given file. Altough the default data path might work, it is recommended to always set the data path with the option `--data`. If you do not want the script to use all available CPU cores set the number of cores with `--num_threads`.
 
 The script outputs several files. The following is a list of the output files. In the naming patterns `yymmdd` indicates the date in year-month-day format. The expression e[0] means the number of epochs the model was trained. Examples: `e400` for 400 epochs, `e23` for 23 epochs. `[name]` is the optional name of the model.
 * `[name]_yymmdd.log`: Log file. It includes the most important informations about the training and all the training and validation losses.
