@@ -6,7 +6,9 @@ Read about the Deep Euler Method in the paper:
 
 The same scheme was proposed in the paper [Hypersolvers: Toward Fast Continuous-Depth Models](https://papers.nips.cc/paper/2020/hash/f1686b4badcf28d33ed632036c7ab0b8-Abstract.html)
 
-In this repository the Deep Euler Method is tested on two different equations: the Lotka-Volterra equation and the Van der Pol equation. 
+In this repository the Deep Euler Method is tested on two different equations: the Lotka-Volterra equation and the Van der Pol equation. The aim of the tests is to compare the solutions got by using the Euler, the Deep Euler and the Dormand--Prince method. No attempt is made to compare the computational costs.
+
+The data generation and neural network training is implemented in Python. The Deep Euler Method is implemented in C++. This demonstrates the viability of a C++ DEM implementation, but the code is far from optimized.
 
 ## Running the Codes
 
@@ -28,11 +30,9 @@ python dem_train.py --help
 ```
 The most important options are `epoch` and `batch`. It is advised to always explicitly provide them. A useful combination of arguments is the following.
 ```
-python dem_train.py --name MyModel --epoch 5000 --early_stop --batch 100 --save_plots --print_epoch 50 --print_losses 50
+python dem_train.py --name MyModel --epoch 5000 --early_stop --batch 100 --save_plots --print_epoch 50 --print_losses 50 --data data/vdp_data.hdf5
 ```
-This tells the script to name the model MyModel, run for 5000 epochs at most, but use early stop. The batch size should be 100, and the plots of the learning and validation losses should be saved. Moreover after every 50 epochs the number of the current epoch and the current training and validation losses are printed to the console. If you do not want the script to use all available CPU cores set the number of cores with `--num_threads`.
-
-The file with the learning data is hard-coded into the script. Make sure the variable `data_path` points to the right file before training.
+This tells the script to name the model *MyModel*, run for 5000 epochs at most, but use early stop. The batch size should be 100, and the plots of the learning and validation losses should be saved. Moreover after every 50 epochs the number of the current epoch and the current training and validation losses are printed to the console. The training data is loaded from the given file. Altough the default data path might work, it is recommended to always set the data path with the option `--data`. If you do not want the script to use all available CPU cores set the number of cores with `--num_threads`.
 
 The script outputs several files. The following is a list of the output files. In the naming patterns `yymmdd` indicates the date in year-month-day format. The expression e[0] means the number of epochs the model was trained. Examples: `e400` for 400 epochs, `e23` for 23 epochs. `[name]` is the optional name of the model.
 * `[name]_yymmdd.log`: Log file. It includes the most important informations about the training and all the training and validation losses.
@@ -74,11 +74,12 @@ The necessary Python packages are the following:
 * numpy
 * matplotlib
 * h5py
+* scipy
 * scikit-learn
-* Pytorch: pytorch, torchaudio, torchvision
+* Pytorch: pytorch, torchaudio, torchvision. (More on installation [here](https://pytorch.org/get-started/locally/))
 * cudatoolkit (to use gpu, otherwise unnecessary)
 * optuna
 * plotly
-* jupyter (obviously)
+* jupyter
 
 The C++ codes are trickier, you need *CMake* and the Pytorch C++ distribution aka *Libtorch*. *Libtorch* has a *debug* and a *release* distribution, both are supposed to work. On Windows you also need to install *Microsoft Visual Studio C++*. Read more in [this section](#running-the-c-codes).
