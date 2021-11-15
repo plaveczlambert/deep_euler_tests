@@ -17,10 +17,9 @@ const int nn_outputs = 2;
 c10::TensorOptions global_tensor_op;
 
 //Modify these to load the correct model
-string file_name = "../simulations/vdp_dem_test.txt";
+string file_name = "../simulations/vdp_dem.txt";
 string model_file = "../training/traced_model_vdp.pt"; 
 string scaler_file = "../training/scaler_vdp.psca";
-string output_log = "../simulations/output_compare.txt";
 
 typedef double value_type;
 typedef vector<value_type> state_type;
@@ -95,7 +94,6 @@ struct norm_scaler {
 
 //ode function of Van der Pol equation
 class VdP {
-	std::ofstream outputs_out;
 	double mu = 1.5;
 public:
 	torch::jit::script::Module model; //the neural network
@@ -103,33 +101,24 @@ public:
 	std_scaler in_transf;
 	std_scaler out_transf;
 
-	VdP(std::array<double, nn_inputs> inital_values) {
-		outputs_out.open(output_log);
-		outputs_out.precision(17);
-		outputs_out.flags(ios::scientific);
+	VdP() {
 
-		//metamodel initializations
+		//neural network initializations
 		inputs = torch::ones({ 1, nn_inputs }, global_tensor_op);
-		
-		for (int i = 0; i < nn_inputs; i++) inputs[0][i] = inital_values[i];
-		
+				
 		try {
 			model = torch::jit::load(model_file);
 			std::vector<torch::jit::IValue> inp;
 			inp.push_back(torch::ones({ 1, nn_inputs }, global_tensor_op));
-			cout << "777" << endl;
 			std::cout << inp << endl;
-			cout << "7" << endl;
 			// Execute the model and turn its output into a tensor.
 			at::Tensor output = model.forward(inp).toTensor().detach();
-			cout << "77" << endl;
 			std::cout << output << endl;
 		}
 		catch (const c10::Error& e) {
 			std::cerr << "Error loading the model: " << e.what() << endl;
 			exit(-1);
 		}
-		cout << "43" << endl;
 		ifstream in(scaler_file);
 		if (!in) {
 			std::cerr << "Error loading the scalers." << endl;
@@ -149,11 +138,6 @@ public:
 		for (int i = 0; i < nn_inputs - 1; i++) {
 			inputs[0][i + 1] = x[i];
 		}
-		outputs_out << t << " ";
-		//log inputs
-		for (int i = 0; i < nn_inputs; i++) {
-			outputs_out << inputs[0][i].item<double>() << " ";
-		}
 
 		//scaling
 		torch::Tensor scaled = in_transf(inputs);
@@ -163,20 +147,16 @@ public:
 		torch::Tensor loc_trun_err = model.forward(inps).toTensor().detach();
 		loc_trun_err = 	out_transf.inverse_transform(loc_trun_err);
 
-		//log outputs
 		for (int i = 0; i < nn_outputs; i++) {
 			errors[i] = loc_trun_err[0][i].item<double>();
-			outputs_out << errors[i] << " ";
 		}
-		outputs_out << endl;
 		return errors;
 	}
 
 	/*ODE function. In the pointer x the values are rewritten with the computed slopes*/
-	void operator()(double t, double* x) {
-		double dxdt = -mu * (x[1] * x[1] - 1) * x[0] - x[1];
-		x[1] = x[0];
-		x[0] = dxdt;
+	void operator()(double t, const double* x, double * dxdt) {
+		dxdt[0] = -mu * (x[1] * x[1] - 1) * x[0] - x[1];
+		dxdt[1] = x[0];
 	}
 };
 
@@ -224,15 +204,12 @@ public:
 		#pragma warning(disable:6011)
 		while (l < max_l) {
 
-			for (int j = 0; j < order; j++) {
-				k[j] = vector[j];
-			}
 			vdp.local_error(t, t + delta_t, vector, local_error);
-			vdp(t, k);
+			vdp(t, vector, k);
 			for (int j = 0; j < order; j++) {
-				vector[j] = vector[j] + delta_t * k[j] +delta_t * delta_t * local_error[j];
+				vector[j] = vector[j] + delta_t * k[j] + delta_t * delta_t * local_error[j];
 				//To change to Euler Method uncomment the following, comment out the previous
-				//vector[j] = vector[j] + delta_t * k[j];																 
+				//vector[j] = vector[j] + delta_t * k[j];
 			}
 			l++;
 			t += delta_t;
@@ -269,8 +246,6 @@ int main() {
 	global_tensor_op = torch::TensorOptions().dtype(torch::kFloat64);
 	cout << "Van der Pol with metamodel started\n" << setprecision(17) << endl;
 
-	double* x = new double[nn_outputs]{ 4.0, 3.0 };
-
 	ofstream ofs(file_name);
 	if(!ofs.is_open())exit(-1);
 	ofs.precision(17);
@@ -278,10 +253,10 @@ int main() {
 	cout << "Writing file: " << file_name << endl;
 
 	//initial conditions
-	std::array<value_type, nn_inputs> initial_inputs = { 1e-5, x[0], x[1]};
+	double* x = new double[nn_outputs]{ 1.0, 1.0 };
 	
 	double t_start = 0.0;
-	VdP bubi(initial_inputs);
+	VdP sys;
 	
 	ODESolver solver(nn_outputs);
 	solver.setInitialCondition(x, 0.0);
@@ -290,8 +265,9 @@ int main() {
 
 	cout << "Solving..." << endl;
 	auto t1 = chrono::high_resolution_clock::now();
-	solver.solve(bubi, ofs);
+	solver.solve(sys, ofs);
 	auto t2 = chrono::high_resolution_clock::now();
+	//Time of the computation. Not a valid measurment of DEM computation time. Just an indicator.
 	cout << "Time (ms):" << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << endl;
 	
 	ofs.flush();
