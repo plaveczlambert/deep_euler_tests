@@ -6,7 +6,9 @@ Read about the Deep Euler Method in the paper:
 
 The same scheme was proposed in the paper [Hypersolvers: Toward Fast Continuous-Depth Models](https://papers.nips.cc/paper/2020/hash/f1686b4badcf28d33ed632036c7ab0b8-Abstract.html)
 
-In this repository the Deep Euler Method is tested on two different equations: the Lotka-Volterra equation and the Van der Pol equation. 
+In this repository the Deep Euler Method is tested on two different equations: the Lotka-Volterra equation and the Van der Pol equation. The aim of the tests is to compare the solutions got by using the Euler, the Deep Euler and the Dormand--Prince method. No attempt is made to compare the computational costs.
+
+The data generation and neural network training is implemented in Python. The Deep Euler Method is implemented in C++. This demonstrates the viability of a C++ DEM implementation, but the code is far from optimized.
 
 ## Running the Codes
 
@@ -72,11 +74,12 @@ The necessary Python packages are the following:
 * numpy
 * matplotlib
 * h5py
+* scipy
 * scikit-learn
-* Pytorch: pytorch, torchaudio, torchvision
+* Pytorch: pytorch, torchaudio, torchvision. (More on installation [here](https://pytorch.org/get-started/locally/))
 * cudatoolkit (to use gpu, otherwise unnecessary)
 * optuna
 * plotly
-* jupyter (obviously)
+* jupyter
 
 The C++ codes are trickier, you need *CMake* and the Pytorch C++ distribution aka *Libtorch*. *Libtorch* has a *debug* and a *release* distribution, both are supposed to work. On Windows you also need to install *Microsoft Visual Studio C++*. Read more in [this section](#running-the-c-codes).
