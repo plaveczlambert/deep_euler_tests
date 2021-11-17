@@ -1,4 +1,4 @@
-/*Deep euler implementation*/
+/*Deep euler implementation of Lotka-Volterra equation*/
 
 #include <iostream>
 #include <fstream>
@@ -18,9 +18,8 @@ const int nn_inputs = 4;
 const int nn_outputs = 2;
 c10::TensorOptions global_tensor_op;
 
-string file_name = "../simulations/lotka_dem.txt";
-string model_file = "../training/traced_model_e2500_2107071955.pt";
-string output_log = "../simulations/output_compare.txt";
+string file_name = "../simulations/lotka_dem.txt"; //the simulation results are saved here
+string model_file = "../training/traced_model.pt"; //the neural network (jit/traced model) to be loaded
 
 typedef double value_type;
 typedef vector<value_type> state_type;
@@ -93,26 +92,19 @@ struct norm_scaler {
 	}
 };
 
-//ode function of bubble dynamic
+//ode function of lotka volterra
 class lotka {
-	std::ofstream outputs_out;
 public:
 	torch::jit::script::Module model; //the neural network
 	torch::Tensor inputs; //reused tensor of inputs
-	std_scaler std_transf;
-	norm_scaler nrm_transf;
+	//std_scaler std_transf;
+	//norm_scaler nrm_transf;
 
-	lotka(std::array<double, nn_inputs> inital_values) {
-		outputs_out.open(output_log);
-		outputs_out.precision(17);
-		outputs_out.flags(ios::scientific);
+	lotka() {
 
-		//metamodel initializations
+		//neural network initializations
 		inputs = torch::ones({ 1, nn_inputs }, global_tensor_op);
-		//model inputs: dt x1 x2 x3 z... x1now x2now x3now
-		for (int i = 0; i < nn_inputs; i++) inputs[0][i] = inital_values[i];
-		//outputs: z... grad_z(wall)
-
+							 
 		try {
 			model = torch::jit::load(model_file);
 			std::vector<torch::jit::IValue> inp;
@@ -126,7 +118,6 @@ public:
 			std::cerr << "Error loading the model: " << e.what() << endl;
 			exit(-1);
 		}
-		cout << "43" << endl;
 		/*ifstream in(scaler_file);
 		if (!in) {
 			std::cerr << "Error loading the scalers." << endl;
@@ -146,11 +137,6 @@ public:
 		for (int i = 0; i < nn_inputs - 2; i++) {
 			inputs[0][i + 2] = x[i];
 		}
-		outputs_out << t << " ";
-		//log inputs
-		for (int i = 0; i < nn_inputs; i++) {
-			outputs_out << inputs[0][i].item<double>() << " ";
-		}
 
 		//scaling
 		torch::Tensor scaled = inputs; //std_transf(inputs);
@@ -159,21 +145,16 @@ public:
 		inps.push_back(scaled);
 		//evaluating
 		torch::Tensor loc_trun_err = model.forward(inps).toTensor().detach(); //nrm_transf.inverse_transform(model.forward(inps).toTensor().detach());
-
-		//log outputs
 		for (int i = 0; i < nn_outputs; i++) {
 			errors[i] = loc_trun_err[0][i].item<double>();
-			outputs_out << errors[i] << " ";
 		}
-		outputs_out << endl;
 		return errors;
 	}
 
 	/*ODE function. In the pointer x the values are rewritten with the computed slopes*/
-	void operator()(double t, double* x) {
-		double dxdt = x[0] - x[0] * x[1];
-		x[1] = -x[1] + x[0] * x[1];
-		x[0] = dxdt;
+	void operator()(double t, const double* x, double* dxdt) {
+		dxdt[0] = x[0] - x[0] * x[1];
+		dxdt[1] = -x[1] + x[0] * x[1];
 	}
 };
 
@@ -211,13 +192,18 @@ public:
 		double* local_error = (double*)malloc(sizeof(double) * order);
 		double t = begin_t;
 		int l = 0;
+		os << t;
+		for (int i = 0; i < order; i++) {
+			os << " " << vector[i];
+		}
+		os << endl;
 		while (l < max_l) {
 
 			for (int j = 0; j < order; j++) {
 				k[j] = vector[j];
 			}
 			lot.local_error(t, t + delta_t, vector, local_error);
-			lot(t, k);
+			lot(t, vector, k);
 			for (int j = 0; j < order; j++) {
 				vector[j] = vector[j] + delta_t * k[j] + delta_t * delta_t * local_error[j];
 				//To change to Euler Method uncomment the following, comment out the previous
@@ -270,7 +256,7 @@ int main() {
 	std::array<value_type, nn_inputs> initial_inputs = { 1e-5, 0.0, x[0], x[1]};
 	
 	double t_start = 0.0;
-	lotka bubi(initial_inputs);
+	lotka sys;
 	
 	ODESolver solver(nn_outputs);
 	solver.setInitialCondition(x, 0.0);
@@ -279,7 +265,7 @@ int main() {
 	//cin.get();
 	cout << "Solving..." << endl;
 	auto t1 = chrono::high_resolution_clock::now();
-	solver.solve(bubi, ofs);
+	solver.solve(sys, ofs);
 	auto t2 = chrono::high_resolution_clock::now();
 	cout << "Time (ms):" << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << endl;
 	
