@@ -11,7 +11,7 @@ class Euler(OdeSolver):
 
     def __init__(self, fun, t0, y0, t_bound, h, **extraneous):
         warn_extraneous(extraneous)
-        super().__init__(fun, t0, y0, t_bound, vectorized=False, support_complex=False)
+        super().__init__(fun, t0, y0, t_bound, vectorized=False, support_complex=True)
         
         self.h = h
         
