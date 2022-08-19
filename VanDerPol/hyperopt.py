@@ -36,7 +36,7 @@ begin_time = datetime.now();
 # ----- ----- ----- ----- ----- -----
 # Data loading
 # ----- ----- ----- ----- ----- -----
-f = h5py.File("shared_drive/vdp_data_dt.hdf5", "r")#os.path.join('shared_drive', 'vdp_data_dt.hdf5'), 'r')
+f = h5py.File("data/vdp_data.hdf5", "r")
 keys = list(f.keys())
 print(keys)
 X = np.empty(f['vdp_X'].shape)
@@ -141,9 +141,12 @@ def objective(trial):
     trial.set_user_attr("Ran_out_of_epochs", True)
     return vld_loss_best
 
-
-study_name = "nn_A"  # Unique identifier of the study.
-storage_name = "sqlite:///{}.db".format(study_name)
+folder = 'hyperopt'
+if not os.path.isdir(folder):
+    os.mkdir(folder)
+    
+study_name = "nn_ps"  # Unique identifier of the study.
+storage_name = 'sqlite:///{}/{}.db'.format(folder, study_name)
 study = optuna.create_study(
     study_name  = study_name,
     storage     = storage_name,
@@ -166,22 +169,22 @@ print("Duration: " + str(duration))
 
 fig = optuna.visualization.plot_optimization_history(study)
 fig.update_yaxes(type='log')
-fig.write_html(str(study_name)+"_optim_hist.html", include_plotlyjs="cdn")
+fig.write_html(folder+"/"+study_name+"_optim_hist.html", include_plotlyjs="cdn")
 fig = optuna.visualization.plot_param_importances(study)
-fig.write_html(str(study_name)+"_param_importances.html", include_plotlyjs="cdn")
+fig.write_html(folder+"/"+study_name+"_param_importances.html", include_plotlyjs="cdn")
 fig = optuna.visualization.plot_intermediate_values(study)
 fig.update_yaxes(type='log')
-fig.write_html(str(study_name)+"_interm_values.html", include_plotlyjs="cdn")
+fig.write_html(folder+"/"+study_name+"_interm_values.html", include_plotlyjs="cdn")
 
 fig = optuna.visualization.plot_contour(study, params=["hidden_layers", "neurons_per_layer0"])
-fig.write_html(str(study_name)+"_cont0.html", include_plotlyjs="cdn")
+fig.write_html(folder+"/"+study_name+"_cont0.html", include_plotlyjs="cdn")
 fig = optuna.visualization.plot_contour(study, params=["hidden_layers", "neurons_per_layer1"])
-fig.write_html(str(study_name)+"_cont1.html", include_plotlyjs="cdn")
+fig.write_html(folder+"/"+study_name+"_cont1.html", include_plotlyjs="cdn")
 fig = optuna.visualization.plot_contour(study, params=["hidden_layers", "neurons_per_layer2"])
-fig.write_html(str(study_name)+"_cont2.html", include_plotlyjs="cdn")
+fig.write_html(folder+"/"+study_name+"_cont2.html", include_plotlyjs="cdn")
 '''fig = optuna.visualization.plot_contour(study, params=["neurons_per_layer0", "neurons_per_layer1"])
-fig.write_html(str(study_name)+"_cont01.html", include_plotlyjs="cdn")
+fig.write_html(folder+"/"+study_name+"_cont01.html", include_plotlyjs="cdn")
 fig = optuna.visualization.plot_contour(study, params=["neurons_per_layer1", "neurons_per_layer2"])
-fig.write_html(str(study_name)+"_cont12.html", include_plotlyjs="cdn")'''
+fig.write_html(folder+"/"+study_name+"_cont12.html", include_plotlyjs="cdn")'''
 
 print("Plots saved")
