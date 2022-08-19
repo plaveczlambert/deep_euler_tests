@@ -4,7 +4,7 @@ Codes for testing the Deep Euler Method (DEM). The Deep Euler Method is a numeri
 Read about the Deep Euler Method in the paper:
 [Deep Euler method: solving ODEs by approximating the local truncation error of the Euler method](https://arxiv.org/abs/2003.09573).
 
-The same scheme was proposed in the paper [Hypersolvers: Toward Fast Continuous-Depth Models](https://papers.nips.cc/paper/2020/hash/f1686b4badcf28d33ed632036c7ab0b8-Abstract.html)
+The same scheme was proposed in the paper [Hypersolvers: Toward Fast Continuous-Depth Models](https://papers.nips.cc/paper/2020/hash/f1686b4badcf28d33ed632036c7ab0b8-Abstract.html).
 
 In this repository the Deep Euler Method is tested on two different equations: the Lotka-Volterra equation and the Van der Pol equation. The aim of the tests is to compare the solutions got by using the Euler, the Deep Euler and the Dormand--Prince method. No attempt is made to compare the computational costs.
 
