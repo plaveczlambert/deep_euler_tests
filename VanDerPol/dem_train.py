@@ -101,7 +101,7 @@ parser.add_argument(
     '--early_stop',
     dest='early_stop', 
     action='store_true', 
-    help= "Enable early stop when the latest validation loss is larger than the average of the previos five validation losses."
+    help= "Enable early stop when no improvement in validation loss has been achieved for 50 epochs."
     )
 parser.add_argument(
     '--num_threads',
