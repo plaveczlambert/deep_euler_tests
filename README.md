@@ -8,18 +8,21 @@ The same scheme was proposed in the paper [Hypersolvers: Toward Fast Continuous-
 
 In this repository the Deep Euler Method is tested on two different equations: the Lotka-Volterra equation and the Van der Pol equation. The aim of the tests is to compare the solutions got by using the Euler, the Deep Euler and the Dormand--Prince method. No attempt is made to compare the computational costs.
 
-The data generation and neural network training is implemented in Python. The Deep Euler Method is implemented in C++. This demonstrates the viability of a C++ DEM implementation, but the code is far from optimized.
+The whole process of training data generation, neural network training and ODE solution are all implemented in Python. 
+Additionally, the Deep Euler Method is also implemented in C++. This demonstrates the viability of a C++ DEM implementation, but the code is far from optimized.
 
 ## Running the Codes
 
-The codes are written in Python (some in Jupyter notebooks, some as standalone scripts) and C++. No matter which equation you want to test, the process is the following:
+The codes are written in Python (some in Jupyter notebooks, some as standalone scripts). No matter which equation you want to test, the process is the following:
 1. Install the [necessary packages](#necessary-packages).
 1. Go to the test's root folder: `Lotka` for Lotka-Volterra, `VanDerPol` for Van der Pol. :slightly_smiling_face:
 1. Create the empty folders: `build`, `data`, `training`, `simulations` (within Lotka or VanDerPol).
 1. Generate learning data using the `data_gen_*` jupyter notebooks. After all the cells ran, a `.hdf5` file will be available in the `data` folder.
 1. Train a neural network model with `dem_train.py`. The trained model will be available in the `training` folder with several files about the training. The file `traced_model_*.pt` is the trained neural network. The `scaler*.psca` is the data scaling. These are necessary for DEM. In case of Lotka, there is no scaling, no scaler file. More about training [here](#training).
-1. Run the C++ code. This simulates one of the systems with DEM. Outputs the simulation data into the `simulations` folder. On how to set up the C++ environment consult [this section](#running-the-c-codes).
-1. View the results of the simulation with an `*_figures` jupyter notebook.
+1. Integrate the ODE with Euler, Dormand--Prince and DEM using an `*_figures` jupyter notebook. Now you need your traced model and its scaler to use DEM. 
+1. Ready, view the plots :relaxed:
+
+Alternatively, you can test the trained Deep Euler Method in C++ code. Even in this case the data generation and training should still be carried out in Python (1-5). Using the C++ code simulate the ODE with DEM. This outputs the simulation data into the `simulations` folder, which can be read and plotted with an `*_figures` notebook. On how to set up the C++ environment consult [this section](#running-the-c-codes).
 
 ### Training
 First you need to have data to train a neural network, so use a `data_gen_*` jupyter notebook to generate learning data. 
@@ -34,14 +37,19 @@ python dem_train.py --name MyModel --epoch 5000 --early_stop --batch 100 --save_
 ```
 This tells the script to name the model *MyModel*, run for 5000 epochs at most, but use early stop. The batch size should be 100, and the plots of the learning and validation losses should be saved. Moreover after every 50 epochs the number of the current epoch and the current training and validation losses are printed to the console. The training data is loaded from the given file. Altough the default data path might work, it is recommended to always set the data path with the option `--data`. If you do not want the script to use all available CPU cores set the number of cores with `--num_threads`.
 
-The script outputs several files. The following is a list of the output files. In the naming patterns `yymmdd` indicates the date in year-month-day format. The expression e[0] means the number of epochs the model was trained. Examples: `e400` for 400 epochs, `e23` for 23 epochs. `[name]` is the optional name of the model.
-* `[name]_yymmdd.log`: Log file. It includes the most important informations about the training and all the training and validation losses.
-* `model_[name]_e[0]_yymmdd.pt`: Trained model in Pytorch's own format. It also includes information about the optimizer and the number of epochs, so it can be used to continue a training.
-* `traced_model_[name]_e[0]_yymmdd.pt`: Trained model in Pytorch's jit format (aka traced model). This file can be loaded from C++.
-* `scaler_[name]_yymmdd.psca`: File containing the input and output data scalers of the model. This is a normal text file, named `.psca` by me (**P**ytorch Model **Sca**ler). It contains the important attributes of the scikit-learn scaler objects in plain text. It can be loaded from C++.
-* `learning_curve_[name]_yymmdd.png`: The curve of the training and validation losses.
+The script outputs several files. The following is a list of the output files. In the following naming patterns `[yymmdd]` indicates the date in year-month-day format. The expression e[0] means the number of epochs the model was trained. Examples: `e400` for 400 epochs, `e23` for 23 epochs. `[name]` is the optional name of the model.
+* `[name]_[yymmdd].log`: Log file. It includes the most important informations about the training and all the training and validation losses.
+* `model_[name]_e[0]_[yymmdd].pt`: Trained model in Pytorch's own format. It also includes information about the optimizer and the number of epochs, so it can be used to continue a training.
+* `traced_model_[name]_e[0]_[yymmdd].pt`: Trained model in Pytorch's jit format (aka traced model). This file can be loaded into Python and also into C++.
+* `scaler_[name]_[yymmdd].psca`: File containing the input and output data scalers of the model. This is a normal text file, named `.psca` by me (**P**ytorch Model **Sca**ler). It contains the important attributes of the scikit-learn scaler objects in plain text. It can be loaded into Python and C++.
+* `learning_curve_[name]_[yymmdd].png`: The plot of the training and validation losses.
 
-The first three files are always saved, the plots only when `--save_plots` is set. You can create plots later by training for 0 epochs and setting `--load_model` to your model file (not trace model).
+The first three files are always saved, the plots only when `--save_plots` is set. You can create plots later by training for 0 epochs and setting `--load_model` to your model file (not trace model file).
+
+### Integration and comparison
+
+The `*_figures.ipynb` notebooks can be used to integrate the ODEs with the Dormand--Prince (`scipy.integrate.solve_ivp` default method), the Euler (defined in `model/Euler.py`) and the Deep Euler methods (defined in `model/DEM.py`). In order to use them, the trained network and its scaler (if applicable) need to be referenced. See the notebook for more info. Note, that the same notebooks can be used to read and plot the results of the C++ simulations.
+
 
 ### Running the C++ Codes
 *CMake* and *Libtorch* (Pytorch C++) are necessary for this section. Libtorch has two distributions, *release* and *debug*, both should work. 
@@ -62,8 +70,8 @@ Change the run configuration to Debug or Release depending on the used *Libtorch
 
 Rewrite the variables `model_file` and `scaler_file` (only for VdP) to the respective files you got from training. You should be able to run the code now. The result of the Deep Euler integration will be available in the `simulations` folder. (Unless you changed the `file_name` variable, of course.) To view the results use a `*_figures` jupyter notebook.
 
-### Hyperparameter Optimization
-This section only applies to the Van der Pol equation. The file `hyperopt.py` is a hyperparameter optimization script. By running it, an optimized neural network topology can be found. The optimization is done with the help of the Optuna package, check it out to understand its workings: https://optuna.readthedocs.io . The optimization script is written to be deterministic, so it should give the same topology it gave me. (But definitely something similar.) 
+### Hyperparameter Tuning
+This section only applies to the Van der Pol equation. The file `hyperopt.py` is a hyperparameter optimization script. By running it, a tuned neural network topology can be found. The optimization is done with the help of the Optuna package, check it out to understand its workings: https://optuna.readthedocs.io . The optimization script is written to be deterministic, so the tuning should be reproducible.
 
 The optimized topology I got is implemented in `models/MLPs.py` as `OptimizedMLP`. It is the default model in case of the Van der Pol equation. For the Lotka-Volterra equation `SimpleMLP` is used, which is an 8 layer neural network with 80 neurons in every layer. This was recommended in the Deep Euler [paper](https://arxiv.org/abs/2003.09573).
 
